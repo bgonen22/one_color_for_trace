@@ -13,7 +13,7 @@
 
 
 // jump between to traces (head trace to head trace - min JUMP = 3)
-#define JUMP 3
+#define JUMP 10
 
 // delay between iterations
 int delayval = 100; // delay for half a second
