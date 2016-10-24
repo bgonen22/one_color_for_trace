@@ -15,8 +15,11 @@
 #define NUMOFCOLORS      7
 
 
-// jump between to traces
-#define JUMP 10
+// jump between to traces (head trace to head trace - min JUMP = 3)
+#define JUMP 3
+
+// delay between iterations
+int delayval = 100; // delay for half a second
 
 // light level 1=255
 float HIGHLEVEL=0.4;
@@ -28,7 +31,7 @@ float LOWLEVEL=0.06;
 // example for more information on possible values.
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-int delayval = 100; // delay for half a second
+
 int head_color = 0;
 
 void setup() {
@@ -55,7 +58,7 @@ void loop() {
         lightAllTraces(i-1, MEDIUMLEVEL); 
         if (i>1) {
            lightAllTraces(i-2, LOWLEVEL); 
-           if(i>2) {
+           if(i>2 && JUMP >3) {
                 lightAllTraces(i-3, 0); // turn off the distant led.            
            }
         }        
@@ -69,14 +72,18 @@ int LastLed (int i) {
   lightAllTraces(i, HIGHLEVEL); 
   lightAllTraces(i-1, MEDIUMLEVEL);
   lightAllTraces(i-2, LOWLEVEL); 
-  lightAllTraces(i-3, 0); 
+  if (JUMP > 3) {
+    lightAllTraces(i-3, 0); 
+  }
   pixels.show(); // This sends the updated pixel color to the hardware.
   delay(delayval); // Delay for a period of time (in milliseconds).
 
   
   lightAllTraces(i, MEDIUMLEVEL);                     
   lightAllTraces(i-1,LOWLEVEL);
-  lightAllTraces(i-2, 0);                 
+  if (JUMP > 3) {
+   lightAllTraces(i-2, 0);                 
+  }
   head_color = (head_color+1)%NUMOFCOLORS;                    
   lightAllTraces(i-JUMP+1,HIGHLEVEL); 
 
@@ -88,11 +95,14 @@ int LastLed (int i) {
   lightAllTraces(i-JUMP+1, MEDIUMLEVEL);                     
   head_color = (head_color-1)%NUMOFCOLORS;                    
   lightAllTraces(i, LOWLEVEL);
-  lightAllTraces(i-1, 0);                                 
+  if (JUMP > 3) {
+   lightAllTraces(i-1, 0);                                 
+  }
   pixels.show(); // This sends the updated pixel color to the hardware.
   delay(delayval); // Delay for a period of time (in milliseconds).
-
-  lightAllTraces(i, 0);    
+  if (JUMP > 3) { 
+    lightAllTraces(i, 0);    
+  }
   head_color = (head_color+1)%NUMOFCOLORS;                    
   lightAllTraces(i-JUMP+3, HIGHLEVEL); 
   lightAllTraces(i-JUMP+2, MEDIUMLEVEL);                     
