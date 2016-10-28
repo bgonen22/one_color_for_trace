@@ -121,7 +121,7 @@ void loop() {
       if (FADE) {
         first_led_power = !first_led_power;
       }
-      Serial.println(first_led_power);
+    //  Serial.println(first_led_power);
       
       t=new trace(first_led_power,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL); 
       t->advance(); 
