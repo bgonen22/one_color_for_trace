@@ -4,8 +4,6 @@
 #include <iterator>
 using namespace std;
 
-
-
 // Which pin on the Arduino is connected to the NeoPixels?
 
 #define PIN            6
@@ -51,7 +49,7 @@ class trace
    int start_index;
    float power_jump;
    public:
-   void advance() { start_index++;}
+   void advance(int s) { start_index = start_index + s;}
    //---------
    // draw
    //---------
@@ -74,6 +72,9 @@ class trace
 
       
     }    
+   }
+   void setColor(int c) {
+    color = c;   
    }
    int getStartIndex() {
    // Serial.print("star: ");
@@ -104,11 +105,47 @@ void setup() {
 // ---------------------------
 //              LOOP
 // ---------------------------
-void loop() {  
+void loop() {
+  runTrace();
+ // pingPong();
+}
+
+// ---------------------------
+//              pingPong
+// ---------------------------
+void pingPong() {
+  trace *t;  
+  int color;
+  t=new trace(1,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL); 
+  int ad = 1;  
+  while(1) {     
+     if (ad ==1 & t->getStartIndex()==NUMPIXELS) {
+       ad = -1;
+       t->setColor(color);
+       color = (color+1)% NUMOFCOLORS;     
+     } else if (ad == -1 & (t->getStartIndex() - t->getNumOfPixels() +1 == 0)) {
+      ad = 1;
+      t->setColor(color);
+      color = (color+1)% NUMOFCOLORS;     
+     }
+     t->advance(ad);     
+     clearAll();
+     t->draw();   
+     pixels.show(); // This sends the updated pixel color to the hardware.
+     delay(delayval/10); // Delay for a period of time (in milliseconds).   
+       
+  }
+    
+}
+// ---------------------------
+//              runTrace
+// ---------------------------
+void runTrace() {  
   trace *t;  
   int color;
   t=new trace(1,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL);     
   trace_vec.push_back(*t);
+  delete t;
   vector<trace>::iterator it;  
   //Serial.println("begin ");
   int first_led_power = 1;
@@ -124,15 +161,13 @@ void loop() {
     //  Serial.println(first_led_power);
       
       t=new trace(first_led_power,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL); 
-      t->advance(); 
+      t->advance(1); 
       trace_vec.push_back(*t); 
       delete t;
     }
     it = trace_vec.begin();
-    if (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS ) {      
-      //Serial.println("del");      
-      //delete it;      
-      it = trace_vec.erase(it);      
+    if (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS ) {            
+       it = trace_vec.erase(it);      
     }
     clearAll();
     drawAll();   
@@ -146,7 +181,7 @@ void loop() {
 //----------------------------
 //  drawAll
 //----------------------------
-void drawAll() {
+void drawAll() {  
    for (vector<trace>::iterator it = trace_vec.begin() ; it != trace_vec.end(); ++it) {
       it->draw();             
         
@@ -158,7 +193,7 @@ void drawAll() {
 //----------------------------
 void advanceAll() {
     for (vector<trace>::iterator it = trace_vec.begin() ; it != trace_vec.end(); ++it) {
-      it->advance();    
+      it->advance(1);    
     }
 }
 //----------------------------
