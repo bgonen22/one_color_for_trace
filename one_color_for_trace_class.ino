@@ -19,7 +19,7 @@ using namespace std;
 #define JUMP 3
 
 // traces pwer will be like wave or like teeth
-#define FADE 1 //1 - traces power like a wave, 0 always first led max power
+#define FADE 0 //1 - traces power like a wave, 0 always first led max power
 
 // how many pixels in each trace
 #define NUM_OF_PIXELS_IN_TRACE 3
@@ -28,8 +28,8 @@ using namespace std;
 int delayval = 100; // delay in milisec
 
 // light level 1=255
-float HIGHLEVEL=0.4;
-float LOWLEVEL=0.06;
+float HIGHLEVEL=40;
+float LOWLEVEL=6;
 
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
@@ -38,16 +38,16 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 
 
 int head_color = 0;
-uint32_t getColor(byte color, float level);
+uint32_t getColor(byte color, byte user_power);
 class trace
 {  
-   int num_of_pixels;
-   int first_led_power; //1 - highest power, 0 lowest
+   byte num_of_pixels;
+   boolean first_led_power; //1 - highest power, 0 lowest
    byte color;
-   float high_level;
-   float low_level;
+   byte high_level;
+   byte low_level;
    int start_index;
-   float power_jump;
+   byte power_jump;
    public:
    void advance(int s) { start_index = start_index + s;}
    //---------
@@ -67,7 +67,8 @@ class trace
       } else {
         level = low_level + i*power_jump;        
       }
-      
+ //     Serial.print("level ");
+//      Serial.println(level);
       pixels.setPixelColor(pos, getColor(color,level));    
 
       
@@ -84,7 +85,7 @@ class trace
    int getNumOfPixels() {
     return num_of_pixels;
    }
-   trace(int first,int num, int c,float high, float low){
+   trace(int first,int num, int c,byte high, byte low){
     first_led_power = first;
     num_of_pixels = num;
     color = c;
@@ -107,7 +108,7 @@ void setup() {
 // ---------------------------
 void loop() {
   runTrace();
- // pingPong();
+ //  pingPong();
 }
 
 // ---------------------------
@@ -148,7 +149,7 @@ void runTrace() {
   delete t;
   vector<trace>::iterator it;  
   //Serial.println("begin ");
-  int first_led_power = 1;
+  int first_led_power = 1;  
   while (1) {
     advanceAll();
     it = trace_vec.end();
@@ -159,16 +160,16 @@ void runTrace() {
         first_led_power = !first_led_power;
       }
     //  Serial.println(first_led_power);
-      
+ //     Serial.println(color);
       t=new trace(first_led_power,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL); 
       t->advance(1); 
       trace_vec.push_back(*t); 
       delete t;
     }
     it = trace_vec.begin();
-    if (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS ) {            
-       it = trace_vec.erase(it);      
-    }
+    if (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS ) {                 
+      it = trace_vec.erase(it);      
+    }    
     clearAll();
     drawAll();   
     pixels.show(); // This sends the updated pixel color to the hardware.
@@ -205,19 +206,26 @@ void clearAll() {
   }
 
 }
+
+//----------------------------
+//  getColor
+//----------------------------
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
 // the level is how brigt will be tghe light (0 to 255).
-uint32_t getColor(byte color, float level) {
-  if (level==0) return pixels.Color(0, 0, 0); 
+uint32_t getColor(byte color, byte user_power) {
+  if (user_power==0) return pixels.Color(0, 0, 0); 
   float power;
+  float level;
  // Serial.println(color);
+  level = (1.0*user_power)/100;
   if(color < NUMOFCOLORS/3) {
      power=1.0*color/(NUMOFCOLORS/3)*255;
      return pixels.Color(level*(255 - power), 0, level*power); 
   } else if(color < 2*NUMOFCOLORS/3) {
       color -= NUMOFCOLORS/3;
       power=1.0*color/(NUMOFCOLORS/3)*255;
+  //    Serial.println(pixels.Color(0, level*power, level*(255 - power)));
       return pixels.Color(0, level*power, level*(255 - power));
   } else {
      color -= 2*NUMOFCOLORS/3;
