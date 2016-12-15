@@ -9,11 +9,18 @@
 #define NUMPIXELS      60
 
 // How many colors do you want (more colors, more gradient)?
-#define NUMOFCOLORS      7
+#define NUMOFCOLORS      6
 
 
 // jump between to traces (head trace to head trace - min JUMP = 3)
-#define JUMP 10
+#define JUMP 5
+
+// traces power will be like wave or like teeth
+#define FADE 0 //1 - traces power like a wave, 0 always first led max power
+
+// start from the middle or from the beginning
+#define FROM_MIDDLE 1 // 1 - start from the middle for both sides
+
 
 // delay between iterations
 int delayval = 100; // delay for half a second
@@ -40,11 +47,17 @@ void loop() {
 
   // For a set of NeoPixels the first NeoPixel is 0, second is 1, all the way up to the count of pixels minus one.
   int i = -1;
-
+  int last_led;
+  if (FROM_MIDDLE) {
+    last_led = NUMPIXELS/2;  
+  } else {
+    last_led = NUMPIXELS -1;
+  }
   while(1){
     i++;
 //    Serial.println(head_color);
-    if (i == NUMPIXELS-1) {
+    
+    if (i == last_led) {
       i = LastLed(i);
       continue;    
     }      
@@ -110,11 +123,24 @@ int LastLed (int i) {
 }
 void lightAllTraces(int i, float power) {
   int trace_num = 0;
-   while (i >= 0 ) {
+   //Serial.println(i);
+   while (i >= 0 ) {     
      int color = (head_color+trace_num)%NUMOFCOLORS;
-      pixels.setPixelColor(i, Wheel(color,power));
+     if (FROM_MIDDLE) {
+      pixels.setPixelColor(NUMPIXELS/2+i, Wheel(color,power));
+      pixels.setPixelColor(NUMPIXELS/2-i, Wheel(color,power));
+     } else {
+       pixels.setPixelColor(i, Wheel(color,power));     
+     }
       i-=JUMP;     
       trace_num++;
+      if (FADE) {
+        if (power == HIGHLEVEL) {
+          power = LOWLEVEL;      
+        } else if (power == LOWLEVEL) {
+          power = HIGHLEVEL;      
+        }
+      }
    } 
 }
 // Input a value 0 to 255 to get a color value.
@@ -139,3 +165,4 @@ uint32_t Wheel(byte color, float level) {
      return pixels.Color(level*power, level*(255 - power), 0);
   }
 }
+
