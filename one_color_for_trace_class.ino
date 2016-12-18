@@ -35,7 +35,7 @@ float HIGHLEVEL=40;
 float LOWLEVEL=6;
 
 const byte interruptPin = 2;
-int start = 0 ;
+volatile boolean start = 0 ;
 int color = 0;
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
@@ -127,20 +127,21 @@ void start_with_button() {
   trace *t;  
   vector<trace>::iterator it;  
   while (1) {
-    if (start) {
-        t=new trace(29,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL);
+    //Serial.println(start);
+    if (start) {        
+        t=new trace(1,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL);
         color = (color+1)% NUMOFCOLORS;   
         trace_vec.push_back(*t); 
         delete t;
         start = 0;
     }
     it = trace_vec.begin();
-    if (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS ) {                 
-      it = trace_vec.erase(it);      
+    if (trace_vec.size() > 0 && (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS) ) {      
+      it = trace_vec.erase(it);            
     } 
     advanceAll();
     clearAll();
-    drawAll();   
+    drawAll();       
     pixels.show(); // This sends the updated pixel color to the hardware.
     delay(delayval); // Delay for a period of time (in milliseconds).   
     
@@ -219,27 +220,42 @@ void runTrace() {
 //  drawAll
 //----------------------------
 void drawAll() {  
+  //Serial.println("drawAll");
+  if (trace_vec.size() == 0) {
+    return;  
+  }
    for (vector<trace>::iterator it = trace_vec.begin() ; it != trace_vec.end(); ++it) {
       it->draw();             
         
     }
+    //Serial.println("exit drawAll");
 }
 
 //----------------------------
 //  advanceAll
 //----------------------------
 void advanceAll() {
+  //Serial.println("advanceAll");
+  if (trace_vec.size() == 0) {
+    return;  
+  }
     for (vector<trace>::iterator it = trace_vec.begin() ; it != trace_vec.end(); ++it) {
       it->advance(1);    
     }
+    //Serial.println("exit advanceAll");
 }
 //----------------------------
 //  clearAll
 //----------------------------
 void clearAll() {
+  //Serial.println("clearAll");
+  if (trace_vec.size() == 0) {
+    return;  
+  }
   for (int i = 0; i< NUMPIXELS; ++i) {
     pixels.setPixelColor(i,0);
   }
+  //Serial.println("exit clearAll");
 
 }
 
