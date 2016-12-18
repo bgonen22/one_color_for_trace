@@ -1,7 +1,10 @@
+#include <ArduinoSTL.h>
+
 #include <Adafruit_NeoPixel.h>
-#include <StandardCplusplus.h>
+//#include <StandardCplusplus.h>
 #include <vector>
 #include <iterator>
+
 using namespace std;
 
 // Which pin on the Arduino is connected to the NeoPixels?
@@ -9,13 +12,13 @@ using namespace std;
 #define PIN            6
 
 // How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS      60
+#define NUMPIXELS      50
 
 // How many colors do you want (more colors, more gradient)?
-#define NUMOFCOLORS      15
+#define NUMOFCOLORS      6
 
 
-// jump between to traces (head trace to head trace - min JUMP = 3)
+// jump between two traces (tail trace to head trace)
 #define JUMP 3
 
 // traces pwer will be like wave or like teeth
@@ -31,6 +34,9 @@ int delayval = 100; // delay in milisec
 float HIGHLEVEL=40;
 float LOWLEVEL=6;
 
+const byte interruptPin = 2;
+int start = 0 ;
+int color = 0;
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
 // example for more information on possible values.
@@ -101,30 +107,58 @@ void setup() {
  Serial.begin(9600);
   pixels.begin(); // This initializes the NeoPixel library.
   //Serial.println("setup");
-  
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), start_trace, FALLING);
 }
 // ---------------------------
 //              LOOP
 // ---------------------------
 void loop() {
-  runTrace();
+  //runTrace();
  //  pingPong();
+ 
+  start_with_button();  
 }
 
+// ---------------------------
+//              start_with_button
+// ---------------------------
+void start_with_button() {
+  trace *t;  
+  vector<trace>::iterator it;  
+  while (1) {
+    if (start) {
+        t=new trace(29,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL);
+        color = (color+1)% NUMOFCOLORS;   
+        trace_vec.push_back(*t); 
+        delete t;
+    }
+    it = trace_vec.begin();
+    if (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS ) {                 
+      it = trace_vec.erase(it);      
+    }    
+    clearAll();
+    drawAll();   
+    pixels.show(); // This sends the updated pixel color to the hardware.
+    delay(delayval); // Delay for a period of time (in milliseconds).   
+    
+  
+  }
+}
 // ---------------------------
 //              pingPong
 // ---------------------------
 void pingPong() {
-  trace *t;  
-  int color;
+  trace *t;    
+  int color = 0;
   t=new trace(1,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL); 
   int ad = 1;  
   while(1) {     
-     if (ad ==1 & t->getStartIndex()==NUMPIXELS) {
+     if ((ad ==1) & (t->getStartIndex()==NUMPIXELS)) {
        ad = -1;
        t->setColor(color);
        color = (color+1)% NUMOFCOLORS;     
-     } else if (ad == -1 & (t->getStartIndex() - t->getNumOfPixels() +1 == 0)) {
+     } else if ((ad == -1) & (t->getStartIndex() - t->getNumOfPixels() +1 == 0)) {
       ad = 1;
       t->setColor(color);
       color = (color+1)% NUMOFCOLORS;     
@@ -143,7 +177,7 @@ void pingPong() {
 // ---------------------------
 void runTrace() {  
   trace *t;  
-  int color;
+  int color = 0;
   t=new trace(1,NUM_OF_PIXELS_IN_TRACE,color,HIGHLEVEL,LOWLEVEL);     
   trace_vec.push_back(*t);
   delete t;
@@ -232,5 +266,9 @@ uint32_t getColor(byte color, byte user_power) {
      power=1.0*color/(NUMOFCOLORS/3)*255;
      return pixels.Color(level*power, level*(255 - power), 0);
   }
+}
+
+void start_trace() {
+  start = 1;
 }
 
