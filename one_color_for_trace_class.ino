@@ -1,7 +1,7 @@
-#include <ArduinoSTL.h>
+//#include <ArduinoSTL.h>
 
 #include <Adafruit_NeoPixel.h>
-//#include <StandardCplusplus.h>
+#include <StandardCplusplus.h>
 #include <vector>
 #include <iterator>
 
@@ -132,11 +132,13 @@ void start_with_button() {
         color = (color+1)% NUMOFCOLORS;   
         trace_vec.push_back(*t); 
         delete t;
+        start = 0;
     }
     it = trace_vec.begin();
     if (it->getStartIndex() - it->getNumOfPixels() >= NUMPIXELS ) {                 
       it = trace_vec.erase(it);      
-    }    
+    } 
+    advanceAll();
     clearAll();
     drawAll();   
     pixels.show(); // This sends the updated pixel color to the hardware.
