@@ -3,7 +3,7 @@
 
 // Which pin on the Arduino is connected to the NeoPixels?
 
-#define PIN            6
+#define PIN            3
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      60
@@ -72,7 +72,7 @@ void loop() {
                 lightAllTraces(i-3, 0); // turn off the distant led.            
            }
         }        
-    }  
+    }      
     pixels.show(); // This sends the updated pixel color to the hardware.
     delay(delayval); // Delay for a period of time (in milliseconds).
   }
@@ -147,22 +147,22 @@ void lightAllTraces(int i, float power) {
 // The colours are a transition r - g - b - back to r.
 // the level is how brigt will be tghe light (0 to 255).
 uint32_t Wheel(byte color, float level) {
-
-  if (level==0) return pixels.Color(0, 0, 0);
+  Adafruit_NeoPixel dummy_pixels;
+  if (level==0) return dummy_pixels.Color(0, 0, 0);
   //level=100;   
   float power;
  // Serial.println(color);
   if(color < NUMOFCOLORS/3) {
      power=1.0*color/(NUMOFCOLORS/3)*255;
-     return pixels.Color(level*(255 - power), 0, level*power); 
+     return dummy_pixels.Color(level*(255 - power), 0, level*power); 
   } else if(color < 2*NUMOFCOLORS/3) {
       color -= NUMOFCOLORS/3;
       power=1.0*color/(NUMOFCOLORS/3)*255;
-      return pixels.Color(0, level*power, level*(255 - power));
+      return dummy_pixels.Color(0, level*power, level*(255 - power));
   } else {
      color -= 2*NUMOFCOLORS/3;
      power=1.0*color/(NUMOFCOLORS/3)*255;
-     return pixels.Color(level*power, level*(255 - power), 0);
+     return dummy_pixels.Color(level*power, level*(255 - power), 0);
   }
 }
 
